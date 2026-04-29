@@ -1,7 +1,7 @@
 # HTML Theme — Design Spec
 
 **Date:** 2026-04-29
-**Status:** Approved (pending spec review)
+**Status:** Implemented (see "Implementation Deviations" at end)
 **Target:** wordpress.org theme directory
 
 ## Premise
@@ -373,7 +373,23 @@ These are intentionally unresolved and may be revisited:
 ## Success Criteria
 
 1. Activating the theme on a default WP install renders a working site with no console errors and no visible broken layout.
-2. View source on a sample post: aside from the skip link's `screen-reader-text` class and any classes inside `the_content()` (author's responsibility), the theme-emitted markup contains zero `class` attributes and zero `id` attributes (except `id="main"` on `<main>` for the skip link target).
-3. The theme passes the wp.org Theme Check plugin with no errors. Warnings reviewed and either resolved or documented.
+2. View source on a sample post: aside from the skip link's `screen-reader-text` class, the `body_class()` output, the `post_class()` output on `<article>` (added for wp.org compliance — see Deviations), and any classes inside `the_content()` (author's responsibility), the theme-emitted markup contains zero theme-specific class attributes and zero `id` attributes (except `id="main"` on `<main>` for the skip link target).
+3. The theme passes the wp.org Theme Check plugin with zero REQUIRED issues and zero WARNINGS. RECOMMENDED items are reviewed and either implemented or documented as deliberate omissions.
 4. No JavaScript is enqueued by the theme.
 5. The only stylesheet enqueued by the theme is `style.css`.
+
+## Implementation Deviations
+
+Recorded after implementation (2026-04-29):
+
+1. **Repo structure**: theme files were moved into a `html/` subdirectory at the repo root, separate from test infrastructure (`composer.json`, `phpunit.xml.dist`, `tests/`, `vendor/`, `docs/`). Required by Theme Check, which flags non-theme files in the theme directory as REQUIRED issues. Also aligns the directory name with the text-domain (`html`) per wp.org convention. The "html" directory is what ships; the rest is dev-only.
+
+2. **`post_class()` on `<article>` tags**: added to `single.php`, `page.php`, `index.php`, `home.php`, `front-page.php`, `archive.php`, and `search.php`. Theme Check flags absence of `post_class()` as a REQUIRED issue. This emits classes like `post-X type-post status-publish hentry category-Y` on `<article>` — a deliberate concession to wp.org compliance. The success criterion was relaxed to permit this.
+
+3. **`wp_link_pages()` after `the_content()`**: added to `single.php`, `page.php`, and `front-page.php` for posts paginated with `<!--nextpage-->`. Theme Check requirement.
+
+4. **Theme tags**: revised from speculative `minimal, classic-theme, accessibility-ready, blog` to wp.org-recognized `blog, accessibility-ready, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready`. Theme Check flagged unrecognized tags.
+
+5. **Comment template `<section>`**: rendered inside `single.php`/`page.php` after `</article>` rather than alongside, to keep the comments landmark properly nested under `<main>`. (Trivial — matched what was already shipped.)
+
+6. **Smoke test scope**: the "no theme-emitted classes" verification (`tests/smoke/check-no-classes.sh`) excludes WP-managed regions (`<head>`, `<body class>`, `<article>` interior, `wp_list_comments`/`comment_form` output, `get_search_form` output, `the_posts_pagination` output) since these are emitted via WP APIs invoked by the theme but not authored by it.
