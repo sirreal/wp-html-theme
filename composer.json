@@ -1,0 +1,21 @@
+{
+  "name": "sirreal/html-wp-theme",
+  "description": "Minimal HTML WordPress theme.",
+  "license": "GPL-2.0-or-later",
+  "type": "wordpress-theme",
+  "require": {
+    "php": ">=7.4"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.6",
+    "brain/monkey": "^2.6"
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "HTMLTheme\\Tests\\": "tests/"
+    }
+  }
+}
