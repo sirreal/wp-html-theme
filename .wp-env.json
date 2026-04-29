@@ -3,7 +3,7 @@
   "phpVersion": "8.2",
   "port": 8890,
   "testsPort": 8891,
-  "themes": ["."],
+  "themes": ["./html"],
   "config": {
     "WP_DEBUG": true,
     "WP_DEBUG_DISPLAY": true,

@@ -1,6 +1,7 @@
 <?php
 /**
- * Fallback template. Used when no more specific template exists.
+ * Blog posts index. Used as the front page (when set to "Latest posts")
+ * or as the posts page when a static front is configured.
  *
  * @package HTML
  */
@@ -8,13 +9,25 @@
 get_header();
 ?>
 
+<header>
+    <h1>
+        <?php
+        if ( is_home() && ! is_front_page() ) {
+            echo esc_html( get_the_title( get_option( 'page_for_posts' ) ) );
+        } else {
+            esc_html_e( 'Latest posts', 'html' );
+        }
+        ?>
+    </h1>
+</header>
+
 <?php if ( have_posts() ) : ?>
     <?php while ( have_posts() ) : the_post(); ?>
-        <article>
+        <article <?php post_class(); ?>>
             <header>
-                <h1>
+                <h2>
                     <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
-                </h1>
+                </h2>
                 <p>
                     <time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>">
                         <?php echo esc_html( get_the_date() ); ?>
@@ -33,11 +46,7 @@ get_header();
     );
     ?>
 <?php else : ?>
-    <article>
-        <h1><?php esc_html_e( 'Nothing here', 'html' ); ?></h1>
-        <p><?php esc_html_e( 'No posts found.', 'html' ); ?></p>
-        <?php get_search_form(); ?>
-    </article>
+    <p><?php esc_html_e( 'No posts found.', 'html' ); ?></p>
 <?php endif; ?>
 
 <?php get_footer();

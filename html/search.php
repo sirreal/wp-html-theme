@@ -1,7 +1,6 @@
 <?php
 /**
- * Blog posts index. Used as the front page (when set to "Latest posts")
- * or as the posts page when a static front is configured.
+ * Search results template.
  *
  * @package HTML
  */
@@ -12,18 +11,19 @@ get_header();
 <header>
     <h1>
         <?php
-        if ( is_home() && ! is_front_page() ) {
-            echo esc_html( get_the_title( get_option( 'page_for_posts' ) ) );
-        } else {
-            esc_html_e( 'Latest posts', 'html' );
-        }
+        printf(
+            /* translators: %s: search query */
+            esc_html__( 'Search results for: %s', 'html' ),
+            '<q>' . esc_html( get_search_query() ) . '</q>'
+        );
         ?>
     </h1>
+    <?php get_search_form(); ?>
 </header>
 
 <?php if ( have_posts() ) : ?>
     <?php while ( have_posts() ) : the_post(); ?>
-        <article>
+        <article <?php post_class(); ?>>
             <header>
                 <h2>
                     <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
@@ -41,12 +41,13 @@ get_header();
     <?php
     the_posts_pagination(
         array(
-            'aria_label' => esc_attr__( 'Posts', 'html' ),
+            'aria_label' => esc_attr__( 'Search results', 'html' ),
         )
     );
     ?>
 <?php else : ?>
-    <p><?php esc_html_e( 'No posts found.', 'html' ); ?></p>
+    <p><?php esc_html_e( 'No results. Try a different search:', 'html' ); ?></p>
+    <?php get_search_form(); ?>
 <?php endif; ?>
 
 <?php get_footer();

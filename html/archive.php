@@ -1,6 +1,6 @@
 <?php
 /**
- * Search results template.
+ * Archive template (categories, tags, authors, dates).
  *
  * @package HTML
  */
@@ -9,21 +9,18 @@ get_header();
 ?>
 
 <header>
-    <h1>
-        <?php
-        printf(
-            /* translators: %s: search query */
-            esc_html__( 'Search results for: %s', 'html' ),
-            '<q>' . esc_html( get_search_query() ) . '</q>'
-        );
-        ?>
-    </h1>
-    <?php get_search_form(); ?>
+    <h1><?php the_archive_title(); ?></h1>
+    <?php
+    $description = get_the_archive_description();
+    if ( $description ) {
+        echo '<div>' . wp_kses_post( $description ) . '</div>';
+    }
+    ?>
 </header>
 
 <?php if ( have_posts() ) : ?>
     <?php while ( have_posts() ) : the_post(); ?>
-        <article>
+        <article <?php post_class(); ?>>
             <header>
                 <h2>
                     <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
@@ -41,13 +38,12 @@ get_header();
     <?php
     the_posts_pagination(
         array(
-            'aria_label' => esc_attr__( 'Search results', 'html' ),
+            'aria_label' => esc_attr__( 'Posts', 'html' ),
         )
     );
     ?>
 <?php else : ?>
-    <p><?php esc_html_e( 'No results. Try a different search:', 'html' ); ?></p>
-    <?php get_search_form(); ?>
+    <p><?php esc_html_e( 'No posts found.', 'html' ); ?></p>
 <?php endif; ?>
 
 <?php get_footer();

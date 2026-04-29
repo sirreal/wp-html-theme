@@ -9,7 +9,7 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../../inc/class-html-walker-nav-menu.php';
+require_once __DIR__ . '/../../html/inc/class-html-walker-nav-menu.php';
 
 class WalkerNavMenuTest extends TestCase {
 
