@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": false,
+    "color": {
+      "defaultPalette": false,
+      "defaultGradients": false,
+      "defaultDuotone": false,
+      "customDuotone": false
+    },
+    "typography": {
+      "defaultFontSizes": false,
+      "fluid": false
+    },
+    "layout": {
+      "contentSize": "65ch",
+      "wideSize": "80ch"
+    },
+    "spacing": {
+      "defaultSpacingSizes": false
+    }
+  },
+  "styles": {}
+}
