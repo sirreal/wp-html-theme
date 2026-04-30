@@ -14,12 +14,66 @@ Text Domain: html
 Tags: blog, accessibility-ready, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready
 */
 
-:root { color-scheme: light dark; }
+:root {
+  color-scheme: light dark;
+  --content-size: 65ch;
+  --wide-size: 80ch;
+}
+
+/* `.alignfull` uses 100vw, which on platforms with permanent scrollbars
+   exceeds the viewport's scrollable width. `clip` (vs `hidden`) avoids
+   creating a scroll container or fixed-positioning containing block. */
+html { overflow-x: clip; }
 
 body {
-  max-width: 65ch;
-  margin-inline: auto;
+  /* `margin: 0` is load-bearing: .alignfull's `calc(50% - 50vw)` breakout
+     math relies on body having no extra margin. */
+  margin: 0;
   padding-inline: 1rem;
+}
+
+/* Site-frame regions (header / footer adjacent to <main>) center at content-size. */
+body > header,
+body > footer {
+  max-width: var(--content-size);
+  margin-inline: auto;
+}
+
+/* The post container caps at wide-size — provides the wider parent that
+   .alignwide and .alignfull break into. */
+main > article {
+  max-width: var(--wide-size);
+  margin-inline: auto;
+}
+
+/* Non-article siblings inside <main> sit at content-size — same as the
+   previous body-is-content-width baseline. Covers the comments <section>,
+   pagination <nav>, and the archive/search/home <header> blocks. */
+main > :not(article) {
+  max-width: var(--content-size);
+  margin-inline: auto;
+}
+
+/* Default: every direct child of an article (block content from the_content(),
+   plus the article's own <header> and <footer>) sits at content-size. */
+main > article > * {
+  max-width: var(--content-size);
+  margin-inline: auto;
+}
+
+/* Wide alignment: fills the article (= wide-size). */
+/* Source order matters: this and the .alignfull rule below must follow
+   `main > article > *` to override its max-width via the cascade. */
+main > article > .alignwide {
+  max-width: none;
+}
+
+/* Full alignment: breaks out to the viewport edges, ignoring article width
+   and body padding. The classic 100vw / 50%-50vw pattern. */
+main > article > .alignfull {
+  max-width: none;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
 }
 
 .screen-reader-text {
@@ -36,3 +90,15 @@ body {
   margin: 0; overflow: visible;
   clip: auto; white-space: normal;
 }
+
+/* Core-emitted alignment utilities (structural). */
+.alignleft   { float: left;  margin-inline-end: 1em; }
+.alignright  { float: right; margin-inline-start: 1em; }
+.aligncenter { display: block; margin-inline: auto; }
+
+/* Selector hooks required by wp.org theme review; theme adds no decoration. */
+.wp-caption {}
+.wp-caption-text {}
+.gallery-caption {}
+.sticky {}
+.bypostauthor {}
