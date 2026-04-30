@@ -1,12 +1,6 @@
 <?php
-/**
- * HTML theme bootstrap.
- *
- * @package HTML
- */
-
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 require_once get_template_directory() . '/inc/setup.php';
