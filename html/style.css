@@ -20,7 +20,14 @@ Tags: blog, accessibility-ready, custom-logo, custom-menu, featured-images, thre
   --wide-size: 80ch;
 }
 
+/* `.alignfull` uses 100vw, which on platforms with permanent scrollbars
+   exceeds the viewport's scrollable width. `clip` (vs `hidden`) avoids
+   creating a scroll container or fixed-positioning containing block. */
+html { overflow-x: clip; }
+
 body {
+  /* `margin: 0` is load-bearing: .alignfull's `calc(50% - 50vw)` breakout
+     math relies on body having no extra margin. */
   margin: 0;
   padding-inline: 1rem;
 }
@@ -54,6 +61,8 @@ main > article > * {
 }
 
 /* Wide alignment: fills the article (= wide-size). */
+/* Source order matters: this and the .alignfull rule below must follow
+   `main > article > *` to override its max-width via the cascade. */
 main > article > .alignwide {
   max-width: none;
 }
