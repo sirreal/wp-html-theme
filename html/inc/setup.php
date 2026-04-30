@@ -11,6 +11,7 @@ function html_theme_setup() {
 	add_theme_support( 'automatic-feed-links' );
 	add_theme_support( 'responsive-embeds' );
 	add_theme_support( 'custom-logo' );
+	add_theme_support( 'align-wide' );
 	add_theme_support(
 		'html5',
 		array(
@@ -24,6 +25,8 @@ function html_theme_setup() {
 			'navigation-widgets',
 		)
 	);
+
+	add_editor_style( 'style.css' );
 
 	register_nav_menus(
 		array(
@@ -46,6 +49,10 @@ function html_enqueue_assets() {
 		array(),
 		wp_get_theme()->get( 'Version' )
 	);
+
+	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+		wp_enqueue_script( 'comment-reply' );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'html_enqueue_assets' );
 

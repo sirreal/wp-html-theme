@@ -17,5 +17,8 @@ $tag     = 'h' . max( 1, min( 6, $heading ) );
 			</time>
 		</p>
 	</header>
+	<?php if ( has_post_thumbnail() ) : ?>
+		<a href="<?php the_permalink(); ?>"><?php the_post_thumbnail( 'medium' ); ?></a>
+	<?php endif; ?>
 	<?php the_excerpt(); ?>
 </article>

@@ -27,6 +27,10 @@ while ( have_posts() ) :
 			</p>
 		</header>
 
+		<?php if ( has_post_thumbnail() ) : ?>
+			<?php the_post_thumbnail(); ?>
+		<?php endif; ?>
+
 		<?php the_content(); ?>
 
 		<?php wp_link_pages(); ?>

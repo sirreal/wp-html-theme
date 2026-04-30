@@ -36,3 +36,15 @@ body {
   margin: 0; overflow: visible;
   clip: auto; white-space: normal;
 }
+
+/* Core-emitted alignment utilities (structural). */
+.alignleft   { float: left;  margin-inline-end: 1em; }
+.alignright  { float: right; margin-inline-start: 1em; }
+.aligncenter { display: block; margin-inline: auto; }
+
+/* Selector hooks required by wp.org theme review; theme adds no decoration. */
+.wp-caption {}
+.wp-caption-text {}
+.gallery-caption {}
+.sticky {}
+.bypostauthor {}
