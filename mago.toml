@@ -1,0 +1,12 @@
+version = "1"
+php-version = "8.0"
+
+[source]
+paths = ["html", "tests"]
+excludes = ["tests/smoke", "html/languages"]
+
+[formatter]
+use-tabs = true
+function-brace-style = "same-line"
+method-brace-style = "same-line"
+classlike-brace-style = "same-line"
