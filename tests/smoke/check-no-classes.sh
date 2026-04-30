@@ -41,6 +41,11 @@ for path in "${PATHS[@]}"; do
         # WP-managed: search form (get_search_form()).
         s|<form\b[^>]*role="search"[^>]*>.*?</form>||gs;
         s|<form\b[^>]*\bclass="search-form"[^>]*>.*?</form>||gs;
+        # WP-managed: scripts and styles emitted via wp_enqueue_*. The theme
+        # ships no JS or inline styles of its own; any script/style tag in
+        # the body comes from core (e.g., comment-reply) or other WP APIs.
+        s|<script\b[^>]*>.*?</script>||gs;
+        s|<style\b[^>]*>.*?</style>||gs;
     ')"
 
     bad="$(printf '%s' "$stripped" \
