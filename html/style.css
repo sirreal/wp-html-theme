@@ -14,12 +14,49 @@ Text Domain: html
 Tags: blog, accessibility-ready, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready
 */
 
-:root { color-scheme: light dark; }
+:root {
+  color-scheme: light dark;
+  --content-size: 65ch;
+  --wide-size: 80ch;
+}
 
 body {
-  max-width: 65ch;
-  margin-inline: auto;
+  margin: 0;
   padding-inline: 1rem;
+}
+
+/* Site-frame regions (header / footer adjacent to <main>) center at content-size. */
+body > header,
+body > footer {
+  max-width: var(--content-size);
+  margin-inline: auto;
+}
+
+/* The post container caps at wide-size — provides the wider parent that
+   .alignwide and .alignfull break into. */
+main > article {
+  max-width: var(--wide-size);
+  margin-inline: auto;
+}
+
+/* Default: every direct child of an article (block content from the_content(),
+   plus the article's own <header> and <footer>) sits at content-size. */
+main > article > * {
+  max-width: var(--content-size);
+  margin-inline: auto;
+}
+
+/* Wide alignment: fills the article (= wide-size). */
+main > article > .alignwide {
+  max-width: none;
+}
+
+/* Full alignment: breaks out to the viewport edges, ignoring article width
+   and body padding. The classic 100vw / 50%-50vw pattern. */
+main > article > .alignfull {
+  max-width: none;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
 }
 
 .screen-reader-text {
