@@ -46,8 +46,9 @@ main > article {
   margin-inline: auto;
 }
 
-/* Non-article siblings inside <main> (comments section, pagination nav)
-   sit at content-size — same as the previous body-is-content-width baseline. */
+/* Non-article siblings inside <main> sit at content-size — same as the
+   previous body-is-content-width baseline. Covers the comments <section>,
+   pagination <nav>, and the archive/search/home <header> blocks. */
 main > :not(article) {
   max-width: var(--content-size);
   margin-inline: auto;
