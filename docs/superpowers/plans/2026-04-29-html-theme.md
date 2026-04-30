@@ -282,7 +282,7 @@ require_once get_template_directory() . '/inc/class-html-walker-nav-menu.php';
 ```php
 <?php
 /**
- * Theme setup, asset enqueueing, and dequeues.
+ * Theme setup and asset enqueueing.
  *
  * @package HTML
  */
@@ -347,21 +347,14 @@ function html_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'html_enqueue_assets' );
 
 /**
- * Dequeue WP-injected styles we do not need on the front end.
- */
-function html_dequeue_default_styles() {
-    if ( is_admin() ) {
-        return;
-    }
-    wp_dequeue_style( 'wp-block-library' );
-    wp_dequeue_style( 'wp-block-library-theme' );
-    wp_dequeue_style( 'global-styles' );
-    wp_dequeue_style( 'classic-theme-styles' );
-}
-add_action( 'wp_enqueue_scripts', 'html_dequeue_default_styles', 100 );
-
-/**
  * Remove WP emoji output.
+ *
+ * Note: core stylesheets (`wp-block-library`, `global-styles`, `classic-theme-styles`)
+ * are intentionally NOT dequeued — the block editor is enabled with no block
+ * restrictions, so authors rely on `wp-block-library` for layout-bearing blocks
+ * (Columns, Gallery, Cover, Buttons, Media&Text, image alignments). Stripping it
+ * breaks the front-end. Where a stylesheet is unwanted, opt out by not declaring
+ * the corresponding theme support rather than dequeuing after the fact.
  */
 function html_disable_emojis() {
     remove_action( 'wp_head', 'print_emoji_detection_script', 7 );
@@ -398,7 +391,7 @@ Expected: `No syntax errors detected in ...` for each.
 
 ```bash
 git add functions.php inc/setup.php
-git commit -m "Add theme bootstrap, setup, and dequeues"
+git commit -m "Add theme bootstrap and setup"
 ```
 
 ---

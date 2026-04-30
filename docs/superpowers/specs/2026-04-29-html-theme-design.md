@@ -267,10 +267,8 @@ The stylesheet is enqueued normally. Inlining is acceptable as a future optimiza
 On `wp_enqueue_scripts`:
 
 - Enqueue `style.css`.
-- `wp_dequeue_style('wp-block-library')` and `wp-block-library-theme` on the front end.
-- `wp_dequeue_style('global-styles')` on the front end.
-- `wp_dequeue_style('classic-theme-styles')` on the front end.
-- Remove emoji scripts/styles: `remove_action('wp_head', 'print_emoji_detection_script', 7)`, `remove_action('wp_print_styles', 'print_emoji_styles')`, etc.
+- Do **not** dequeue core stylesheets (`wp-block-library`, `wp-block-library-theme`, `global-styles`, `classic-theme-styles`). The block editor is enabled with no block restrictions, so authors can freely insert layout-bearing blocks (Columns, Gallery, Cover, Buttons, Media&Text, image alignments) — these depend on `wp-block-library` to render correctly on the front end. Stripping it produces broken layouts, not minimal output. Where a stylesheet is genuinely unwanted, opt out by not enabling the feature (e.g., omit `add_theme_support('wp-block-styles')` to keep `wp-block-library-theme` from loading), rather than dequeuing after the fact.
+- Remove emoji scripts/styles via `remove_action`/`remove_filter` (`print_emoji_detection_script`, `print_emoji_styles`, etc.). This is not a stylesheet dequeue and is the only WP default the theme actively suppresses.
 
 The block editor is left enabled (no `use_block_editor_for_post` filter). No block-type allowlist.
 
@@ -342,7 +340,7 @@ Footer `<nav>` (footer menu), copyright `<p>`, `wp_footer()`, closing tags.
 
 ### Phase 1 — Skeleton
 - File scaffolding, `style.css` header, `readme.txt`.
-- `functions.php` + `inc/setup.php` with theme supports, menu registration, dequeues.
+- `functions.php` + `inc/setup.php` with theme supports, menu registration, asset enqueue.
 - `header.php`, `footer.php`, `index.php` minimal but functional.
 - Custom nav walker.
 - `theme.json`.
@@ -393,3 +391,7 @@ Recorded after implementation (2026-04-29):
 5. **Comment template `<section>`**: rendered inside `single.php`/`page.php` after `</article>` rather than alongside, to keep the comments landmark properly nested under `<main>`. (Trivial — matched what was already shipped.)
 
 6. **Smoke test scope**: the "no theme-emitted classes" verification (`tests/smoke/check-no-classes.sh`) excludes WP-managed regions (`<head>`, `<body class>`, `<article>` interior, `wp_list_comments`/`comment_form` output, `get_search_form` output, `the_posts_pagination` output) since these are emitted via WP APIs invoked by the theme but not authored by it.
+
+7. **Rolled back stylesheet dequeues (2026-04-30)**: the original spec (and initial implementation) dequeued `wp-block-library`, `wp-block-library-theme`, `global-styles`, and `classic-theme-styles`. Playwright testing against a post containing Columns, Gallery, Cover, Buttons, Media&Text, and aligned-image blocks showed this broke their front-end layout (columns stacked, cover overlay text invisible, buttons rendered as plain links, etc.). Since the theme allows the block editor with no block restrictions, stripping `wp-block-library` is incompatible with that stance — the "structural-only CSS" rule governs theme-authored CSS, not core's layout CSS for blocks the author chose to use. The dequeue function was removed entirely. Where a stylesheet is genuinely unwanted, the correct opt-out is not declaring the corresponding theme support (e.g., `wp-block-library-theme` only loads if `add_theme_support('wp-block-styles')` is declared, which this theme deliberately does not do).
+
+8. **Open follow-up (2026-04-30)**: `alignwide` does not extend past content width — needs `add_theme_support('align-wide')` and `theme.json` `layout.contentSize`/`wideSize`. Surfaced during the dequeue-rollback testing; tracked as a follow-up rather than rolled into the same change.
