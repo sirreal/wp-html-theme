@@ -1,7 +1,8 @@
 <?php
+
 get_header();
 
-while ( have_posts() ) :
+while (have_posts()):
 	the_post();
 	?>
 	<article <?php post_class(); ?>>
@@ -15,10 +16,10 @@ while ( have_posts() ) :
 	</article>
 
 	<?php
-	if ( comments_open() || get_comments_number() ) :
+
+	if (comments_open() || get_comments_number()):
 		comments_template();
 	endif;
-
 endwhile;
 
 get_footer();
