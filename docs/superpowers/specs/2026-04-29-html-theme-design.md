@@ -1,7 +1,7 @@
 # HTML Theme — Design Spec
 
 **Date:** 2026-04-29
-**Status:** Implemented (see "Implementation Deviations" at end)
+**Status:** Implemented
 **Target:** wordpress.org theme directory
 
 ## Premise
@@ -12,8 +12,8 @@ This is a **classic theme** (PHP templates), not a block theme (FSE). Block them
 
 ## Goals
 
-1. Templates output pure semantic HTML — no theme-emitted classes except where strictly required for accessibility.
-2. CSS is structural only (layout, breakpoints, grid). No typography, color, or decoration.
+1. Templates output plain semantic HTML. WordPress's own class output (e.g. from `body_class()`, `post_class()`, `wp_list_comments()`, `wp_link_pages()`, `wp_nav_menu()` submenus) is accepted as-is — those classes are WP's output, not theme decoration.
+2. CSS is structural only (layout, breakpoints, alignwide/alignfull, screen-reader-text). No typography, color, or decoration.
 3. No JavaScript shipped by the theme.
 4. Pass wordpress.org theme review.
 5. Provide a "modern WordPress" content authoring experience (block editor enabled, no block restrictions).
@@ -61,8 +61,7 @@ html/
 ├── header.php
 ├── footer.php
 └── inc/
-    ├── setup.php                          # after_setup_theme + init hooks
-    └── class-html-walker-nav-menu.php     # Custom nav walker
+    └── setup.php                          # after_setup_theme + init hooks
 ```
 
 No `sidebar.php` (no widget areas).
@@ -118,10 +117,10 @@ Illustrative HTML emitted by `single.php` (with `header.php` + `footer.php`):
 ```
 
 Notes:
-- The skip link uses `class="screen-reader-text"` — the single accessibility-only class, required for visually-hidden but screen-reader-accessible content.
+- The skip link uses `class="screen-reader-text"` — required for visually-hidden but screen-reader-accessible content. This is one of the few classes the theme's own templates author directly.
 - `aria-current="page"` is emitted automatically by WP when `add_theme_support('html5', [..., 'navigation-widgets'])` is registered.
 - `<nav>` elements have `aria-label` to disambiguate when multiple nav landmarks exist on a page.
-- The class on the skip link is the only theme-emitted class. Everything else is bare semantic HTML.
+- WordPress APIs (`body_class()`, `post_class()`, `wp_nav_menu()`, `wp_list_comments()`, `wp_link_pages()`, etc.) emit their own class attributes. That output is accepted as-is — it's WordPress integration, not theme-authored decoration.
 
 ## Navigation
 
@@ -142,17 +141,11 @@ wp_nav_menu([
   'container'      => false,
   'items_wrap'     => '<ul>%3$s</ul>',
   'menu_class'     => '',
-  'walker'         => new HTML_Walker_Nav_Menu(),
   'fallback_cb'    => false,
 ]);
 ```
 
-### Custom Walker
-
-`HTML_Walker_Nav_Menu` extends `Walker_Nav_Menu` and overrides `start_el` to:
-- Emit `<li>` with no class attribute.
-- Emit `<a>` with only `href` (and `aria-current` when WP adds it via html5 support).
-- Strip all `menu-item-*`, `current-*`, `page-item-*` classes.
+The default walker is used. WP-emitted `menu-item-*`, `current-*`, `page-item-*` classes are accepted as WordPress integration output.
 
 ### Fallback
 
@@ -250,7 +243,7 @@ The stylesheet is enqueued normally. Inlining is acceptable as a future optimiza
 
 ## functions.php / inc/setup.php
 
-`functions.php` is a thin bootstrap that requires `inc/setup.php` and `inc/class-html-walker-nav-menu.php`.
+`functions.php` is a thin bootstrap that requires `inc/setup.php`.
 
 `inc/setup.php` registers, on `after_setup_theme`:
 
@@ -274,9 +267,7 @@ The block editor is left enabled (no `use_block_editor_for_post` filter). No blo
 
 ## Comments
 
-**Initial approach:** `comments.php` calls `comment_form()` and `wp_list_comments()` with default options. The `html5` theme support reduces the markup verbosity of both. Output is accepted as-is even though it includes some classes; the alternative (custom-rendered comments) is deferred.
-
-**Deferred alternative:** replace `comment_form()` with a hand-rolled `<form>` and `wp_list_comments` with a custom `Walker_Comment` to emit pure semantic HTML. Considered if the initial approach's output proves too noisy in practice. Tracked in Implementation Phases as Phase 4.
+`comments.php` calls `comment_form()` and `wp_list_comments()` with default options. The `html5` theme support reduces the markup verbosity of both. The classes those WordPress APIs emit are accepted as-is — they're WP's output, not theme-authored decoration.
 
 The `comments.php` template wraps the comment block in a `<section aria-label="Comments">` landmark.
 
@@ -307,7 +298,7 @@ Search results. Renders the search query, then loop of matching posts. If no res
 Renders an `<h1>` with the not-found message and a link back home, plus a search form. No fancy graphics.
 
 ### `header.php`
-Opens document, emits `<head>` (with `wp_head()`), opens `<body>` with `body_class()` (which adds WP-managed body classes — accepted as a WP integration point), emits skip link, site `<header>` with title/tagline/custom-logo, and primary `<nav>`.
+Opens document, emits `<head>` (with `wp_head()`), opens `<body>` with `body_class()`, emits skip link, site `<header>` with title/tagline/custom-logo, and primary `<nav>`.
 
 ### `footer.php`
 Footer `<nav>` (footer menu), copyright `<p>`, `wp_footer()`, closing tags.
@@ -342,7 +333,6 @@ Footer `<nav>` (footer menu), copyright `<p>`, `wp_footer()`, closing tags.
 - File scaffolding, `style.css` header, `readme.txt`.
 - `functions.php` + `inc/setup.php` with theme supports, menu registration, asset enqueue.
 - `header.php`, `footer.php`, `index.php` minimal but functional.
-- Custom nav walker.
 - `theme.json`.
 
 ### Phase 2 — Templates
@@ -356,7 +346,6 @@ Footer `<nav>` (footer menu), copyright `<p>`, `wp_footer()`, closing tags.
 - Cross-version testing.
 
 ### Phase 4 — Conditional iterations
-- Custom-rendered comments (replacing `comment_form()`) if Phase 1 comments feel too noisy.
 - Inlined critical CSS as a performance optimization.
 
 ## Open Questions / Future Decisions
@@ -371,35 +360,30 @@ These are intentionally unresolved and may be revisited:
 ## Success Criteria
 
 1. Activating the theme on a default WP install renders a working site with no console errors and no visible broken layout.
-2. View source on a sample post: aside from the skip link's `screen-reader-text` class, the `body_class()` output, the `post_class()` output on `<article>` (added for wp.org compliance — see Deviations), and any classes inside `the_content()` (author's responsibility), the theme-emitted markup contains zero theme-specific class attributes and zero `id` attributes (except `id="main"` on `<main>` for the skip link target).
+2. The theme's own templates author plain semantic HTML — no decorative class attributes added by the theme. Classes emitted by WordPress APIs (`body_class()`, `post_class()`, `wp_nav_menu()`, `wp_list_comments()`, `wp_link_pages()`, `get_search_form()`, `the_posts_pagination()`, etc.) and classes inside `the_content()` are accepted as-is.
 3. The theme passes the wp.org Theme Check plugin with zero REQUIRED issues and zero WARNINGS. RECOMMENDED items are reviewed and either implemented or documented as deliberate omissions.
-4. No JavaScript is enqueued by the theme.
-5. The only stylesheet enqueued by the theme is `style.css`.
+4. No JavaScript is shipped by the theme. (Core-shipped scripts the theme enqueues, like `comment-reply`, are not theme-authored.)
+5. The only stylesheet enqueued by the theme is `style.css`. Core block stylesheets (`wp-block-library`, `global-styles`, etc.) are left alone.
 
-## Implementation Deviations
+## Implementation Notes
 
-Recorded after implementation (2026-04-29):
+Recorded during implementation:
 
 1. **Repo structure**: theme files were moved into a `html/` subdirectory at the repo root, separate from test infrastructure (`composer.json`, `phpunit.xml.dist`, `tests/`, `vendor/`, `docs/`). Required by Theme Check, which flags non-theme files in the theme directory as REQUIRED issues. Also aligns the directory name with the text-domain (`html`) per wp.org convention. The "html" directory is what ships; the rest is dev-only.
 
-2. **`post_class()` on `<article>` tags**: added to `single.php`, `page.php`, `index.php`, `home.php`, `front-page.php`, `archive.php`, and `search.php`. Theme Check flags absence of `post_class()` as a REQUIRED issue. This emits classes like `post-X type-post status-publish hentry category-Y` on `<article>` — a deliberate concession to wp.org compliance. The success criterion was relaxed to permit this.
+2. **Theme tags**: revised from speculative `minimal, classic-theme, accessibility-ready, blog` to wp.org-recognized `blog, accessibility-ready, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready`. Theme Check flagged unrecognized tags.
 
-3. **`wp_link_pages()` after `the_content()`**: added to `single.php`, `page.php`, and `front-page.php` for posts paginated with `<!--nextpage-->`. Theme Check requirement.
+3. **Comment template `<section>`**: rendered inside `single.php`/`page.php` after `</article>` rather than alongside, to keep the comments landmark properly nested under `<main>`.
 
-4. **Theme tags**: revised from speculative `minimal, classic-theme, accessibility-ready, blog` to wp.org-recognized `blog, accessibility-ready, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready`. Theme Check flagged unrecognized tags.
+4. **Core stylesheets are not dequeued**: the block editor is enabled with no block restrictions, so authors rely on `wp-block-library` for layout-bearing blocks (Columns, Gallery, Cover, Buttons, Media&Text, image alignments). Stripping it breaks the front-end. The "structural-only CSS" rule governs theme-authored CSS, not core's layout CSS for blocks the author chose to use. Where a stylesheet is genuinely unwanted, the correct opt-out is not declaring the corresponding theme support (e.g., `wp-block-library-theme` only loads if `add_theme_support('wp-block-styles')` is declared, which this theme deliberately does not do).
 
-5. **Comment template `<section>`**: rendered inside `single.php`/`page.php` after `</article>` rather than alongside, to keep the comments landmark properly nested under `<main>`. (Trivial — matched what was already shipped.)
+5. **`alignwide` / `alignfull` front-end widths**: `add_theme_support('align-wide')` surfaces wide/full options in the editor toolbar; `style.css` realizes the widths on the front end via the constrained-layout pattern (article capped at `wideSize`, article's direct children default to `contentSize`, `.alignwide` releases to `wideSize`, `.alignfull` breaks out to viewport via `width: 100vw` + `margin-inline: calc(50% - 50vw)`). The CSS uses `--content-size` / `--wide-size` custom properties that mirror `theme.json`'s `layout.contentSize` / `wideSize`; the values are duplicated across the two configs (mild redundancy accepted; alternative would be parsing `theme.json` in PHP, heavier than the savings warrant). The editor canvas inherits the same `--content-size` / `--wide-size` tokens via `add_editor_style('style.css')`, but the alignwide/alignfull breakout selectors are scoped to `main > article > …` and don't match in the editor's iframe — Gutenberg's own layout engine handles wide/full there using `theme.json`'s `layout` settings.
 
-6. **Smoke test scope**: the "no theme-emitted classes" verification (`tests/smoke/check-no-classes.sh`) excludes WP-managed regions (`<head>`, `<body class>`, `<article>` interior, `wp_list_comments`/`comment_form` output, `get_search_form` output, `the_posts_pagination` output) since these are emitted via WP APIs invoked by the theme but not authored by it.
-
-7. **Rolled back stylesheet dequeues (2026-04-30)**: the original spec (and initial implementation) dequeued `wp-block-library`, `wp-block-library-theme`, `global-styles`, and `classic-theme-styles`. Playwright testing against a post containing Columns, Gallery, Cover, Buttons, Media&Text, and aligned-image blocks showed this broke their front-end layout (columns stacked, cover overlay text invisible, buttons rendered as plain links, etc.). Since the theme allows the block editor with no block restrictions, stripping `wp-block-library` is incompatible with that stance — the "structural-only CSS" rule governs theme-authored CSS, not core's layout CSS for blocks the author chose to use. The dequeue function was removed entirely. Where a stylesheet is genuinely unwanted, the correct opt-out is not declaring the corresponding theme support (e.g., `wp-block-library-theme` only loads if `add_theme_support('wp-block-styles')` is declared, which this theme deliberately does not do).
-
-8. **`alignwide` / `alignfull` front-end widths (2026-04-30, resolved)**: surfaced during the dequeue-rollback testing — `alignwide` did not extend past content width, and `alignfull` did not reach viewport edges. Resolved in two parts: (a) `add_theme_support('align-wide')` landed alongside the Theme Check round (see deviation #9) so the editor toolbar surfaces wide/full options; (b) the front-end CSS to actually realize the widths landed as a follow-up restructure of `style.css` to the constrained-layout pattern (article capped at `wideSize`, article's direct children default to `contentSize`, `.alignwide` releases to `wideSize`, `.alignfull` breaks out to viewport via `width: 100vw` + `margin-inline: calc(50% - 50vw)`). The CSS uses `--content-size` / `--wide-size` custom properties that mirror `theme.json`'s `layout.contentSize` / `wideSize`; the values are duplicated across the two configs (mild redundancy accepted; alternative would be parsing `theme.json` in PHP, heavier than the savings warrant). The editor canvas inherits the same `--content-size` / `--wide-size` tokens via `add_editor_style('style.css')`, but the alignwide/alignfull breakout selectors are scoped to `main > article > …` and don't match in the editor's iframe — Gutenberg's own layout engine handles wide/full there using `theme.json`'s `layout` settings.
-
-9. **Theme Check RECOMMENDED triage (2026-04-30)**: re-ran Theme Check after the dequeue rollback. Items addressed:
-   - `add_theme_support('align-wide')` added in `inc/setup.php` so the editor surfaces wide/full alignment options. `theme.json` already declared `wideSize`. Note: this only enabled the editor toolbar — making the widths actually take effect on the front end required a follow-up CSS restructure (see #8).
-   - `add_editor_style('style.css')` added so the editor canvas reflects the same structural rules (`max-width: 65ch`) as the front end.
+6. **Theme Check RECOMMENDED triage**: items addressed:
+   - `add_theme_support('align-wide')` added in `inc/setup.php`. `theme.json` already declared `wideSize`.
+   - `add_editor_style('style.css')` added so the editor canvas reflects the same structural rules as the front end.
    - `wp_enqueue_script('comment-reply')` enqueued in `html_enqueue_assets()` gated by `is_singular() && comments_open() && get_option('thread_comments')`. This is core-shipped JS, not theme-authored — consistent with "no theme-shipped JavaScript."
+   - `post_class()` on `<article>` and `wp_link_pages()` after `the_content()` — required by Theme Check, and aligned with the framing: WP-emitted classes are accepted as-is.
    - `the_post_thumbnail()` calls added (gated by `has_post_thumbnail()`) to `single.php` (full size) and `template-parts/post-summary.php` (medium, wrapped in a permalink). Justifies the `featured-images` tag and `post-thumbnails` support already declared.
    - `style.css`: added structural `.alignleft`/`.alignright`/`.aligncenter` rules and empty selector stubs for `.wp-caption`, `.wp-caption-text`, `.gallery-caption`, `.sticky`, `.bypostauthor`. The empty stubs satisfy the wp.org theme-review handbook's "selector must exist" requirement without contributing decoration.
 

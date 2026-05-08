@@ -4,9 +4,9 @@
 
 **Goal:** Build a minimal classic WordPress theme named "HTML" that emits semantic HTML primitives, with structural-only CSS and no JavaScript, ready for wordpress.org submission.
 
-**Architecture:** Classic theme (PHP templates) with the block editor enabled for content. Theme owns the frame; authors own content. Single `style.css` with structural CSS only. Custom `Walker_Nav_Menu` strips per-item classes. theme.json minimally configured to disable WP-generated CSS bloat.
+**Architecture:** Classic theme (PHP templates) with the block editor enabled for content. Theme owns the frame; authors own content. Single `style.css` with structural CSS only (layout, alignwide/alignfull, screen-reader-text). WordPress's class output (`body_class()`, `post_class()`, `wp_nav_menu()`, `wp_list_comments()`, etc.) is accepted as-is — the theme just doesn't add its own decoration on top. theme.json minimally configured to disable WP-generated CSS bloat.
 
-**Tech Stack:** PHP 7.4+ (validated against 8.5), WordPress 6.5+, Composer + PHPUnit + Brain Monkey for unit tests on the walker, `wp-env` (Docker) for smoke testing, Theme Check plugin for wp.org compliance check.
+**Tech Stack:** PHP 7.4+ (validated against 8.5), WordPress 6.5+, Composer + PHPUnit + Brain Monkey for unit tests, `wp-env` (Docker) for smoke testing, Theme Check plugin for wp.org compliance check.
 
 **Spec:** `docs/superpowers/specs/2026-04-29-html-theme-design.md`
 
@@ -87,11 +87,11 @@ A minimal WordPress theme that uses HTML primitives.
 
 == Description ==
 
-HTML is a minimal classic WordPress theme. The theme emits semantic HTML
-elements (article, header, nav, main, footer) with effectively no theme-emitted
-classes or IDs. CSS is structural only — no typography, no colors, no
-decoration. No JavaScript is shipped by the theme. Author content (the block
-editor) is unrestricted; the theme is responsible only for the frame.
+HTML is a minimal classic WordPress theme. The theme renders semantic HTML
+elements (article, header, nav, main, footer). CSS is structural only —
+layout, alignwide/alignfull, screen-reader-text — no typography, no colors,
+no decoration. No JavaScript is shipped by the theme. Author content (the
+block editor) is unrestricted; the theme is responsible only for the frame.
 
 == Changelog ==
 
@@ -274,7 +274,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once get_template_directory() . '/inc/setup.php';
-require_once get_template_directory() . '/inc/class-html-walker-nav-menu.php';
 ```
 
 - [ ] **Step 2: Create `inc/setup.php`**
@@ -396,208 +395,11 @@ git commit -m "Add theme bootstrap and setup"
 
 ---
 
-## Task 5: Custom Walker_Nav_Menu (TDD)
+## Task 5: ~~Custom Walker_Nav_Menu (TDD)~~ — OBSOLETE
 
-**Files:**
-- Create: `tests/unit/WalkerNavMenuTest.php`
-- Create: `inc/class-html-walker-nav-menu.php`
+**Status:** Removed. The original plan added an `HTML_Walker_Nav_Menu` that stripped `menu-item-*` / `current-*` / `page-item-*` classes from `<li>`/`<a>` output. That step is obsolete: the framing is "plain HTML, structural-only CSS, no theme-shipped JS," not "no classes." Classes emitted by `wp_nav_menu()` are WP's output — accepted as-is. Use the default walker.
 
-- [ ] **Step 1: Write the failing test**
-
-```php
-<?php
-/**
- * @package HTML
- */
-
-namespace HTMLTheme\Tests;
-
-use Brain\Monkey;
-use Brain\Monkey\Functions;
-use PHPUnit\Framework\TestCase;
-
-require_once __DIR__ . '/../../inc/class-html-walker-nav-menu.php';
-
-class WalkerNavMenuTest extends TestCase {
-
-    protected function setUp(): void {
-        parent::setUp();
-        Monkey\setUp();
-        Functions\stubTranslationFunctions();
-        Functions\stubEscapeFunctions();
-        Functions\when( 'apply_filters' )->returnArg( 2 );
-    }
-
-    protected function tearDown(): void {
-        Monkey\tearDown();
-        parent::tearDown();
-    }
-
-    public function test_start_el_emits_no_classes_on_li_or_a(): void {
-        $walker = new \HTML_Walker_Nav_Menu();
-        $output = '';
-        $item   = (object) array(
-            'ID'             => 1,
-            'object_id'      => 1,
-            'object'         => 'page',
-            'title'          => 'About',
-            'url'            => 'https://example.com/about',
-            'attr_title'     => '',
-            'target'         => '',
-            'xfn'            => '',
-            'description'    => '',
-            'current'        => false,
-            'classes'        => array( 'menu-item', 'menu-item-1', 'page-item-99' ),
-        );
-        $args   = (object) array( 'before' => '', 'after' => '', 'link_before' => '', 'link_after' => '' );
-
-        $walker->start_el( $output, $item, 0, $args, 0 );
-
-        $this->assertStringNotContainsString( 'class=', $output, 'No class attribute should be emitted' );
-        $this->assertStringContainsString( '<li>', $output );
-        $this->assertStringContainsString( '<a href="https://example.com/about">About</a>', $output );
-    }
-
-    public function test_start_el_emits_aria_current_for_current_item(): void {
-        $walker = new \HTML_Walker_Nav_Menu();
-        $output = '';
-        $item   = (object) array(
-            'ID'          => 2,
-            'object_id'   => 2,
-            'object'      => 'page',
-            'title'       => 'Home',
-            'url'         => 'https://example.com/',
-            'attr_title'  => '',
-            'target'      => '',
-            'xfn'         => '',
-            'description' => '',
-            'current'     => true,
-            'classes'     => array( 'menu-item', 'current-menu-item' ),
-        );
-        $args   = (object) array( 'before' => '', 'after' => '', 'link_before' => '', 'link_after' => '' );
-
-        $walker->start_el( $output, $item, 0, $args, 0 );
-
-        $this->assertStringContainsString( 'aria-current="page"', $output );
-        $this->assertStringNotContainsString( 'class=', $output );
-    }
-
-    public function test_start_el_escapes_url_and_title(): void {
-        $walker = new \HTML_Walker_Nav_Menu();
-        $output = '';
-        $item   = (object) array(
-            'ID'          => 3,
-            'object_id'   => 3,
-            'object'      => 'custom',
-            'title'       => 'A & B',
-            'url'         => 'https://example.com/?x=1&y=2',
-            'attr_title'  => '',
-            'target'      => '',
-            'xfn'         => '',
-            'description' => '',
-            'current'     => false,
-            'classes'     => array(),
-        );
-        $args   = (object) array( 'before' => '', 'after' => '', 'link_before' => '', 'link_after' => '' );
-
-        $walker->start_el( $output, $item, 0, $args, 0 );
-
-        // URL escaping: raw `&y=2` must NOT appear; ampersand should be entified.
-        $this->assertStringNotContainsString( 'x=1&y=2', $output, 'URL must be escaped' );
-        // Title escaping: `&` must be HTML-escaped.
-        $this->assertStringContainsString( 'A &amp; B', $output, 'Title must be HTML-escaped' );
-        $this->assertStringNotContainsString( ' & B', $output, 'Raw ampersand must not appear in title' );
-    }
-}
-```
-
-- [ ] **Step 2: Run the test to verify it fails**
-
-Run: `./vendor/bin/phpunit --filter WalkerNavMenuTest`
-Expected: FAIL — class `HTML_Walker_Nav_Menu` not found.
-
-- [ ] **Step 3: Stub `Walker_Nav_Menu` parent for test environment**
-
-The walker extends `Walker_Nav_Menu`, which is a WP class not present in unit tests. Add a stub at the top of `tests/bootstrap.php`:
-
-Edit `tests/bootstrap.php`:
-
-```php
-<?php
-require_once __DIR__ . '/../vendor/autoload.php';
-
-if ( ! class_exists( 'Walker_Nav_Menu' ) ) {
-    class Walker_Nav_Menu {
-        public $tree_type = array( 'post_type', 'taxonomy', 'custom' );
-        public $db_fields = array( 'parent' => 'menu_item_parent', 'id' => 'db_id' );
-        public function start_el( &$output, $item, $depth = 0, $args = null, $id = 0 ) {}
-        public function end_el( &$output, $item, $depth = 0, $args = null ) {}
-    }
-}
-```
-
-- [ ] **Step 4: Implement the walker**
-
-Create `inc/class-html-walker-nav-menu.php`:
-
-```php
-<?php
-/**
- * Custom nav menu walker that emits no classes on <li>/<a>.
- *
- * @package HTML
- */
-
-if ( ! defined( 'ABSPATH' ) && ! defined( 'PHPUNIT_RUNNING' ) ) {
-    // Allow loading in unit tests; deny direct web access otherwise.
-    if ( ! class_exists( 'Walker_Nav_Menu' ) ) {
-        return;
-    }
-}
-
-/**
- * Walker that strips per-item classes from menu output.
- */
-class HTML_Walker_Nav_Menu extends Walker_Nav_Menu {
-
-    /**
-     * Emit a single menu item.
-     *
-     * Output shape: `<li><a href="...">Title</a>`
-     * For the current item: `<li><a href="..." aria-current="page">Title</a>`
-     *
-     * @param string   $output Passed by reference.
-     * @param object   $item   Menu item data object.
-     * @param int      $depth  Depth.
-     * @param stdClass $args   Args.
-     * @param int      $id     ID.
-     */
-    public function start_el( &$output, $item, $depth = 0, $args = null, $id = 0 ) {
-        $url   = ! empty( $item->url ) ? esc_url( $item->url ) : '';
-        $title = esc_html( $item->title );
-        $aria  = ! empty( $item->current ) ? ' aria-current="page"' : '';
-
-        $output .= '<li><a href="' . $url . '"' . $aria . '>' . $title . '</a>';
-    }
-}
-```
-
-- [ ] **Step 5: Run tests and verify they pass**
-
-Run: `./vendor/bin/phpunit --filter WalkerNavMenuTest`
-Expected: 3 tests, 0 failures.
-
-- [ ] **Step 6: Lint the walker**
-
-Run: `php -l inc/class-html-walker-nav-menu.php`
-Expected: `No syntax errors detected in inc/class-html-walker-nav-menu.php`.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add inc/class-html-walker-nav-menu.php tests/unit/WalkerNavMenuTest.php tests/bootstrap.php
-git commit -m "Add HTML_Walker_Nav_Menu with class-stripping output (TDD)"
-```
+If you previously created `inc/class-html-walker-nav-menu.php` and `tests/unit/WalkerNavMenuTest.php`, delete them and remove the `require_once` from `functions.php`.
 
 ---
 
@@ -653,7 +455,6 @@ git commit -m "Add HTML_Walker_Nav_Menu with class-stripping output (TDD)"
                     'container'      => false,
                     'items_wrap'     => '<ul>%3$s</ul>',
                     'menu_class'     => '',
-                    'walker'         => new HTML_Walker_Nav_Menu(),
                     'fallback_cb'    => false,
                 )
             );
@@ -691,7 +492,6 @@ NOTE: site title is wrapped in `<p>` rather than `<h1>` because `<h1>` is reserv
                     'container'      => false,
                     'items_wrap'     => '<ul>%3$s</ul>',
                     'menu_class'     => '',
-                    'walker'         => new HTML_Walker_Nav_Menu(),
                     'fallback_cb'    => false,
                 )
             );
@@ -1427,85 +1227,11 @@ git commit -m "Add wp-env config for local testing"
 
 ---
 
-## Task 17: Smoke test "no theme-emitted classes"
+## Task 17: ~~Smoke test "no theme-emitted classes"~~ — OBSOLETE
 
-**Files:**
-- Create: `tests/smoke/check-no-classes.sh`
+**Status:** Removed. The premise (theme-emitted markup must contain no class attributes except `screen-reader-text`) does not match the actual goal: plain HTML in templates, structural-only CSS, no theme-shipped JS. Classes that WordPress APIs emit (`body_class()`, `post_class()`, `wp_nav_menu()`, `wp_list_comments()`, `wp_link_pages()`, etc.) are accepted as-is and would have produced false-positive failures here. Seeding sample content (from the original Step 1) is still useful for manual verification but is no longer gated by an automated check.
 
-- [ ] **Step 1: Seed sample content**
-
-Run:
-```bash
-wp-env run cli wp post create --post_type=post --post_title='Hello' --post_content='<p>Hello world from a paragraph block.</p>' --post_status=publish
-wp-env run cli wp post create --post_type=page --post_title='About' --post_content='<p>About this site.</p>' --post_status=publish
-wp-env run cli wp menu create 'Primary'
-wp-env run cli wp menu item add-custom primary 'Home' '/'
-wp-env run cli wp menu item add-custom primary 'About' '/about/'
-wp-env run cli wp menu location assign primary primary
-```
-Expected: each command reports Success.
-
-- [ ] **Step 2: Create the smoke test script**
-
-```bash
-#!/usr/bin/env bash
-# tests/smoke/check-no-classes.sh
-#
-# Verifies that the theme-emitted markup contains no class attributes
-# except .screen-reader-text. Fetches several URL paths and inspects the
-# outer chrome (everything outside the_content output).
-set -euo pipefail
-
-BASE_URL="${BASE_URL:-http://localhost:8888}"
-PATHS=("/" "/about/" "/?p=1" "/?s=hello" "/no-such-page/")
-
-failed=0
-for path in "${PATHS[@]}"; do
-    url="${BASE_URL}${path}"
-    body="$(curl -s -L "$url")"
-
-    # Extract everything OUTSIDE the_content. We approximate by stripping
-    # <article>...</article> blocks (where author content lives) and
-    # checking what remains in <header>, <nav>, <footer>, and around them.
-    outside="$(printf '%s' "$body" | perl -0777 -pe 's|<article\b.*?</article>||gs')"
-
-    # Allowed classes in theme-emitted markup:
-    #   - screen-reader-text (skip link)
-    # Anything else flags a regression.
-    bad_classes="$(printf '%s' "$outside" \
-        | grep -oE 'class="[^"]*"' \
-        | grep -vE 'class="screen-reader-text"' \
-        || true)"
-
-    if [ -n "$bad_classes" ]; then
-        echo "FAIL: $url — unexpected class attributes outside <article>:"
-        printf '  %s\n' $bad_classes
-        failed=1
-    else
-        echo "OK:   $url"
-    fi
-done
-
-exit "$failed"
-```
-
-Make it executable: `chmod +x tests/smoke/check-no-classes.sh`.
-
-- [ ] **Step 3: Run the smoke test**
-
-Run: `BASE_URL=http://localhost:8888 ./tests/smoke/check-no-classes.sh`
-Expected: All paths print `OK:` and the script exits 0.
-
-If failures appear, inspect each one and either:
-- Adjust template output (the bug is real), OR
-- Adjust the allowlist in the script if the class is genuinely WP-required and unavoidable (rare; document in plan notes).
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add tests/smoke/check-no-classes.sh
-git commit -m "Add smoke test verifying no theme-emitted classes"
-```
+If you previously created `tests/smoke/check-no-classes.sh`, delete it.
 
 ---
 
@@ -1634,12 +1360,9 @@ This task has no code edits — it's a checklist run.
 Run: `wp-env run cli wp theme list --status=active --format=csv`
 Expected: shows `html,active`. Visit `http://localhost:8888/` — no PHP errors visible. Browser console shows no JS errors.
 
-- [ ] **Criterion 2: View source contains zero theme-emitted classes outside content**
+- [ ] **Criterion 2: Templates author plain semantic HTML**
 
-Run: `BASE_URL=http://localhost:8888 ./tests/smoke/check-no-classes.sh`
-Expected: all paths report OK.
-
-Manually view source on a sample post; visually verify the chrome around `<article>` contains only `class="screen-reader-text"` (skip link) and `id="main"`.
+Manually view source on a sample post (front page, single, archive, search, 404). Confirm the theme's templates emit `<article>`, `<header>`, `<nav>`, `<main>`, `<footer>` directly without theme-added decorative classes. WordPress's own class output (`body_class()`, `post_class()`, `wp_nav_menu()`, `wp_list_comments()`, `wp_link_pages()`, etc.) is expected and acceptable.
 
 - [ ] **Criterion 3: Theme Check passes**
 
@@ -1681,7 +1404,6 @@ git tag -a v0.1.0 -m "Initial HTML theme release"
 
 Tracked for future iterations, not part of this plan:
 
-- Custom-rendered comments (replacing `comment_form()` with hand-rolled markup and a `Walker_Comment` subclass).
 - Inlined critical CSS for performance.
 - Alternate template variants (`single-{post-type}.php`, etc.).
 - Customizer integration beyond WP defaults.

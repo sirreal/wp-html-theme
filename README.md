@@ -10,7 +10,7 @@ html/                  # the theme (this is what ships)
   theme.json           # disables WP defaults
   *.php                # templates: header, footer, index, single, page,
                        #   archive, search, 404, comments, home, front-page
-  inc/                 # setup.php + class-html-walker-nav-menu.php
+  inc/                 # setup.php
   languages/html.pot   # translation template
   screenshot.png
 
@@ -38,12 +38,8 @@ wp-env run cli wp theme activate html
 ## Verification
 
 ```sh
-# Unit tests (Walker_Nav_Menu output)
+# Unit tests
 ./vendor/bin/phpunit
-
-# Smoke test: confirms theme-emitted markup contains no classes/IDs
-# beyond the deliberate exceptions (see tests/smoke/check-no-classes.sh).
-BASE_URL=http://localhost:8890 ./tests/smoke/check-no-classes.sh
 
 # wp.org Theme Check (must show 0 REQUIRED, 0 WARNING)
 cat tests/smoke/run-theme-check.php | wp-env run cli wp eval-file -
@@ -66,8 +62,6 @@ The resulting `html.zip` should contain only the theme. Nothing in `tests/`, `ve
 
 - Spec: [`docs/superpowers/specs/2026-04-29-html-theme-design.md`](docs/superpowers/specs/2026-04-29-html-theme-design.md)
 - Plan: [`docs/superpowers/plans/2026-04-29-html-theme.md`](docs/superpowers/plans/2026-04-29-html-theme.md)
-
-The spec's "Implementation Deviations" section records concessions made for wp.org compliance (notably `post_class()` on `<article>` and `wp_link_pages()`).
 
 ## License
 
