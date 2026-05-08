@@ -1,6 +1,6 @@
 === HTML ===
 Contributors: jonsurrell
-Tags: blog, accessibility-ready, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready
+Tags: blog, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 7.4
