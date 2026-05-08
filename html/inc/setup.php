@@ -33,11 +33,6 @@ function html_theme_setup() {
 }
 add_action( 'after_setup_theme', 'html_theme_setup' );
 
-function html_content_width() {
-	$GLOBALS['content_width'] = 800;
-}
-add_action( 'after_setup_theme', 'html_content_width', 0 );
-
 function html_enqueue_assets() {
 	wp_enqueue_style(
 		'html-style',
