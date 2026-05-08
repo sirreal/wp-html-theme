@@ -43,14 +43,14 @@ while ( have_posts() ) :
 				printf(
 					'<p>%s %s</p>',
 					esc_html__( 'Categories:', 'html' ),
-					wp_kses_post( $categories )
+					$categories
 				);
 			}
 			if ( $tags ) {
 				printf(
 					'<p>%s %s</p>',
 					esc_html__( 'Tags:', 'html' ),
-					wp_kses_post( $tags )
+					$tags
 				);
 			}
 			?>
