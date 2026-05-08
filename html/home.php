@@ -5,8 +5,9 @@ get_header();
 <header>
 	<h1>
 		<?php
-		if ( is_home() && ! is_front_page() ) {
-			echo esc_html( get_the_title( get_option( 'page_for_posts' ) ) );
+		$html_page_for_posts = get_option( 'page_for_posts' );
+		if ( $html_page_for_posts ) {
+			echo esc_html( get_the_title( $html_page_for_posts ) );
 		} else {
 			esc_html_e( 'Latest posts', 'html' );
 		}
