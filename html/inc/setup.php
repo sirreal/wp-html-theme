@@ -1,8 +1,4 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 function html_theme_setup() {
 	load_theme_textdomain( 'html', get_template_directory() . '/languages' );
 

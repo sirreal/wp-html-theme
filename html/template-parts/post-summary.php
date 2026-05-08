@@ -1,8 +1,4 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 $heading = isset( $args['heading'] ) ? (int) $args['heading'] : 2;
 $tag     = 'h' . max( 1, min( 6, $heading ) );
 ?>
