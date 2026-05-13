@@ -27,6 +27,6 @@ jobs:
           node-version: '20'
 
       - name: Run WordPress theme check
-        uses: WordPress/theme-review-action@trunk
+        uses: WordPress/theme-review-action@4f824f58b2ffdabbe82fb69814eb2d2e1dd16b5a
         with:
           root-folder: html
