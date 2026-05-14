@@ -1,0 +1,32 @@
+name: Theme Check
+
+'on':
+  push:
+    paths:
+      - 'html/**'
+      - '.github/workflows/theme-check.yml'
+  pull_request:
+    paths:
+      - 'html/**'
+      - '.github/workflows/theme-check.yml'
+  workflow_dispatch:
+
+jobs:
+  theme-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run WordPress theme check
+        uses: WordPress/theme-review-action@4f824f58b2ffdabbe82fb69814eb2d2e1dd16b5a
+        with:
+          root-folder: html
